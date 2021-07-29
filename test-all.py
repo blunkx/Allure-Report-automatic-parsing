@@ -44,7 +44,8 @@ def create_dict():
             else:
                 func_name_csv = row[9]
             if (func_name == func_name_csv):
-                if (row[6] != ""):
+                is_class = re.search("(\S+)(\[)(\S+)", row[6])
+                if (row[6] != "" and not is_class):
                     path = row[5] + ".py" + "::" + row[6]
                 else:
                     path = row[5] + ".py"
@@ -68,7 +69,6 @@ def create_dict():
             'topo_marker': topo,
             'path_list': path_list,
             'status': fun["status"],
-            'UID': fun["uid"]
         }
         func_list.append(func_dict)
 
@@ -80,16 +80,41 @@ def write_output(file_name, func_list):
 
 
 url = "https://jenkins.clounix.com/job/sonic/job/testbed/job/201911.clounix/job/sonic-mgmt/40/artifact/allure-report.zip"
-r = requests.get(url)
-code = open("allure.zip", "wb")
-code.write(r.content)
-code.close()
+#r = requests.get(url)
+#code = open("allure.zip", "wb")
+# code.write(r.content)
+# code.close()
 zip_ref = ZipFile("allure.zip", 'r')
 zip_ref.extractall()
 func_list = list()
 create_dict()
+for func in func_list:
+    same_funcs = list(
+        filter(lambda fun: fun['path_list'] == func["path_list"], func_list))
+    count_pass = 0
+    count_skip = 0
+    count_fail = 0
+    for same_func in same_funcs:
+        if (same_func["status"] == "passed"):
+            count_pass += 1
+        elif (same_func["status"] == "skipped"):
+            count_skip += 1
+        elif (same_func["status"] == "failed"):
+            count_fail += 1
+
+    if (count_fail > 0):
+        new_status = "failed"
+    elif (count_fail == 0 and count_pass == 0):
+        new_status = "skipped"
+    elif (count_fail == 0 and count_pass > 0):
+        new_status = "passed"
+
+    func["status"] = new_status
+
+func_list = {v['path_list']: v for v in func_list}.values()
 func_list = sorted(func_list, key=lambda k: k['path_list'])
 func_list = sorted(func_list, key=lambda k: k['suite'])
 func_list = sorted(func_list, key=lambda k: k['file_name'])
 
+print(func_list)
 write_output("output.csv", func_list)
