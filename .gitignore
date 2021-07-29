@@ -117,8 +117,11 @@ venv.bak/
 # Rope project settings
 .ropeproject
 
+
 # mkdocs documentation
 /site
+＊.zip
+/allure-report
 
 # mypy
 .mypy_cache/
