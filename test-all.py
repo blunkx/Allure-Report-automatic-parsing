@@ -37,6 +37,9 @@ def create_dict():
             func_name = fun["name"]
         path = ""
         suite = ""
+        full_name = ""
+        csv_path_lists = list()
+        suite_lists = list()
         for row in suites_rows:
             match_csv = re.search("(\S+)(\[)(\S+)", row[9])
             if match_csv:
@@ -47,21 +50,49 @@ def create_dict():
                 is_class = re.search("(\S+)(\[)(\S+)", row[6])
                 if (row[6] != "" and not is_class):
                     path = row[5] + ".py" + "::" + row[6]
+                    lists = [row[5], row[6]]
                 else:
                     path = row[5] + ".py"
+                    lists = [row[5]]
                 suite = row[4].replace(".", "/")
-                break
+                suite_list = row[4].split(".")
+                csv_path_lists = lists + suite_list
+                # print(csv_path_list)
+                only_file_name = row[5]
 
         if suite != "":
-            file_name = suite + "/" + row[5] + ".py"
+            file_name = suite + "/" + only_file_name + ".py"
             path_list = suite + "/" + path + "::" + func_name
         else:
-            file_name = row[5] + ".py"
+            file_name = only_file_name + ".py"
             path_list = path + "::" + func_name
 
         uid_file = open("allure-report/data/test-cases/" + fun['uid'] +
                         ".json")
         uid_array = json.load(uid_file)
+        full_name = uid_array["fullName"]
+        full_name_lists = re.split('\.|#', full_name)
+
+        all_in_csv = True
+        for csv_path_list in csv_path_lists:
+            if (csv_path_list not in full_name_lists):
+                all_in_csv = False
+
+        if (all_in_csv == False):
+            suite_lists = suite.split("/")
+            for suite_list in suite_lists:
+                if (suite_list in full_name_lists):
+                    full_name_lists.remove(suite_list)
+            if (suite != ""):
+                file_name = suite + "/" + full_name_lists[0] + ".py"
+            else:
+                file_name = full_name_lists[0] + ".py"
+            # print(file_name)
+            if(len(full_name_lists) == 2):
+                path_list = file_name + "::" + full_name_lists[1]
+            elif (len(full_name_lists) == 3):
+                path_list = file_name + "::" + \
+                    full_name_lists[1] + "::" + full_name_lists[2]
         topo = [s for s in uid_array['extra']['tags'] if 'topology(' in s][0]
         func_dict = {
             'suite': suite,
@@ -99,7 +130,7 @@ for func in func_list:
             count_pass += 1
         elif (same_func["status"] == "skipped"):
             count_skip += 1
-        elif (same_func["status"] == "failed"):
+        elif (same_func["status"] == "failed" or same_func["status"] == "broken"):
             count_fail += 1
 
     if (count_fail > 0):
@@ -111,10 +142,10 @@ for func in func_list:
 
     func["status"] = new_status
 
-func_list = {v['path_list']: v for v in func_list}.values()
 func_list = sorted(func_list, key=lambda k: k['path_list'])
 func_list = sorted(func_list, key=lambda k: k['suite'])
 func_list = sorted(func_list, key=lambda k: k['file_name'])
+func_list = list({v['path_list']: v for v in func_list}.values())
 
-print(func_list)
+print(len(func_list))
 write_output("output.csv", func_list)
