@@ -35,15 +35,7 @@ def create_dict():
             func_name = match.group(1)
         else:
             func_name = fun["name"]
-
         for row in suites_rows:
-            uid_file = open("allure-report/data/test-cases/" + fun['uid'] +
-                            ".json")
-            uid_array = json.load(uid_file)
-            full_name = uid_array["fullName"]
-            full_name_lists = re.split('\.|#', full_name)
-            all_in_csv = True
-
             if (fun["name"] == row[9]):
                 is_class = re.search("(\S+)(\[)(\S+)", row[6])
                 if (row[6] != "" and not is_class):
@@ -55,22 +47,48 @@ def create_dict():
                 suite = row[4].replace(".", "/")
                 suite_list = row[4].split(".")
                 csv_path_lists = lists + suite_list
-                print(csv_path_lists)
                 only_file_name = row[5]
-                if (suite == "tests"):
-                    suite = ""
-                for csv_path_list in csv_path_lists:
-                    if (csv_path_list not in full_name_lists):
-                        all_in_csv = False
-                if (all_in_csv == True):
-                    break
+                break
 
+        if (suite == ""):
+            suite = "tests"
         if suite != "":
             file_name = suite + "/" + only_file_name + ".py"
             path_list = suite + "/" + path + "::" + func_name
         else:
             file_name = only_file_name + ".py"
             path_list = path + "::" + func_name
+
+        uid_file = open("allure-report/data/test-cases/" + fun['uid'] +
+                        ".json")
+        uid_array = json.load(uid_file)
+        full_name = uid_array["fullName"]
+        full_name_lists = re.split('\.|#', full_name)
+
+        all_in_csv = True
+        for csv_path_list in csv_path_lists:
+            if (csv_path_list not in full_name_lists):
+                all_in_csv = False
+
+        if (all_in_csv == False):
+            suite_lists = suite.split("/")
+
+            for suite_list in suite_lists:
+                if (suite_list in full_name_lists):
+                    full_name_lists.remove(suite_list)
+            if (suite in full_name_lists):
+                full_name_lists.remove(suite)
+
+            if (suite != ""):
+                file_name = suite + "/" + full_name_lists[0] + ".py"
+            else:
+                file_name = full_name_lists[0] + ".py"
+            # print(file_name)
+            if(len(full_name_lists) == 2):
+                path_list = file_name + "::" + full_name_lists[1]
+            elif (len(full_name_lists) == 3):
+                path_list = file_name + "::" + \
+                    full_name_lists[1] + "::" + full_name_lists[2]
 
         topo = [s for s in uid_array['extra']['tags'] if 'topology(' in s][0]
         func_dict = {
@@ -85,6 +103,8 @@ def create_dict():
 
 def write_output(file_name, func_list):
     out = open(file_name, 'w')
+    csv.writer(out).writerow(
+        ['suite', 'file_name', 'topology', 'test_case', 'status'])
     for func in func_list:
         csv.writer(out).writerow(list(func.values()))
 
@@ -118,7 +138,14 @@ for func in func_list:
         new_status = "skipped"
     elif (count_fail == 0 and count_pass > 0):
         new_status = "passed"
-
+    if (func["suite"] == "tests"):
+        func["suite"] = ""
+        file_name = func["file_name"].split("/")
+        file_name.remove("tests")
+        func["file_name"] = " ".join(file_name)
+        path_lists = func["path_list"].split("/")
+        path_lists.remove("tests")
+        func["path_list"] = " ".join(path_lists)
     func["status"] = new_status
 
 func_list = sorted(func_list, key=lambda k: k['path_list'])
