@@ -35,18 +35,16 @@ def create_dict():
             func_name = match.group(1)
         else:
             func_name = fun["name"]
-        path = ""
-        suite = ""
-        full_name = ""
-        csv_path_lists = list()
-        suite_lists = list()
+
         for row in suites_rows:
-            match_csv = re.search("(\S+)(\[)(\S+)", row[9])
-            if match_csv:
-                func_name_csv = match_csv.group(1)
-            else:
-                func_name_csv = row[9]
-            if (func_name == func_name_csv):
+            uid_file = open("allure-report/data/test-cases/" + fun['uid'] +
+                            ".json")
+            uid_array = json.load(uid_file)
+            full_name = uid_array["fullName"]
+            full_name_lists = re.split('\.|#', full_name)
+            all_in_csv = True
+
+            if (fun["name"] == row[9]):
                 is_class = re.search("(\S+)(\[)(\S+)", row[6])
                 if (row[6] != "" and not is_class):
                     path = row[5] + ".py" + "::" + row[6]
@@ -57,8 +55,15 @@ def create_dict():
                 suite = row[4].replace(".", "/")
                 suite_list = row[4].split(".")
                 csv_path_lists = lists + suite_list
-                # print(csv_path_list)
+                print(csv_path_lists)
                 only_file_name = row[5]
+                if (suite == "tests"):
+                    suite = ""
+                for csv_path_list in csv_path_lists:
+                    if (csv_path_list not in full_name_lists):
+                        all_in_csv = False
+                if (all_in_csv == True):
+                    break
 
         if suite != "":
             file_name = suite + "/" + only_file_name + ".py"
@@ -67,32 +72,6 @@ def create_dict():
             file_name = only_file_name + ".py"
             path_list = path + "::" + func_name
 
-        uid_file = open("allure-report/data/test-cases/" + fun['uid'] +
-                        ".json")
-        uid_array = json.load(uid_file)
-        full_name = uid_array["fullName"]
-        full_name_lists = re.split('\.|#', full_name)
-
-        all_in_csv = True
-        for csv_path_list in csv_path_lists:
-            if (csv_path_list not in full_name_lists):
-                all_in_csv = False
-
-        if (all_in_csv == False):
-            suite_lists = suite.split("/")
-            for suite_list in suite_lists:
-                if (suite_list in full_name_lists):
-                    full_name_lists.remove(suite_list)
-            if (suite != ""):
-                file_name = suite + "/" + full_name_lists[0] + ".py"
-            else:
-                file_name = full_name_lists[0] + ".py"
-            # print(file_name)
-            if(len(full_name_lists) == 2):
-                path_list = file_name + "::" + full_name_lists[1]
-            elif (len(full_name_lists) == 3):
-                path_list = file_name + "::" + \
-                    full_name_lists[1] + "::" + full_name_lists[2]
         topo = [s for s in uid_array['extra']['tags'] if 'topology(' in s][0]
         func_dict = {
             'suite': suite,
@@ -115,8 +94,8 @@ url = "https://jenkins.clounix.com/job/sonic/job/testbed/job/201911.clounix/job/
 #code = open("allure.zip", "wb")
 # code.write(r.content)
 # code.close()
-zip_ref = ZipFile("allure.zip", 'r')
-zip_ref.extractall()
+#zip_ref = ZipFile("allure.zip", 'r')
+# zip_ref.extractall()
 func_list = list()
 create_dict()
 for func in func_list:
