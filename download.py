@@ -9,7 +9,7 @@ try:
     wget.download(url, os.getcwd())
 except:
     print('Download failed, try again. Make sure you are connected the VPN')
-
+    exit()
 if not os.path.exists('allure-report.zip'):
     print('File doesn\'t exist!')
 else:
@@ -22,7 +22,7 @@ else:
 if not os.path.isdir('allure-report/data/test-cases') or not os.path.isdir('allure-report/data'):
     print('Failed to open the directory')
 else:
-    allJsonList = os.listdir('allure-report/data/test-cases')
+    all_json_list = os.listdir('allure-report/data/test-cases')
     # for each in allJsonList:
     # print(each)
 
