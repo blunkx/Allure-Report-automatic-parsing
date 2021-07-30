@@ -62,27 +62,43 @@ def create_func_dict(fun, suites_csv, status_dict):
     return func_dict
 
 
-def merger_para_func(func_set, status_dict, func_list):
+def merger_para_func(status_dict, func_list):
     new_list = func_list = list(
         {v['func_name']: v for v in func_list}.values())
-    print(len(new_list))
-    #{'suite': suite, 'file_name': file_name, 'topo_marker': topo_marker,'func_name': path, 'status': fun["status"], 'UID': fun["uid"]}
     for row in new_list:
-        print(status_dict[row['func_name']])
         if status_dict[row['func_name']].count('broken') > 0 or status_dict[row['func_name']].count('failed') > 0:
             row['status'] = 'failed'
         elif status_dict[row['func_name']].count('passed') > 0:
             row['status'] = 'passed'
         elif status_dict[row['func_name']].count('skipped') == len(status_dict[row['func_name']]):
             row['status'] = 'skipped'
-    write_output('output.csv', new_list)
+    return new_list
+
+
+def verify(func_set, func_list_without_para, status_dict):
+    # check that each function in func_set also exists in the func_list_without_para
+    func_name_list = [v['func_name']
+                      for v in func_list_without_para if v['func_name'] in func_set]
+    for func in func_name_list:
+        try:
+            status_dict[func]
+        except:
+            print('Error!')
+            exit()
+    print(len(func_set))
+    print(len(func_name_list))
+    print(len(status_dict))
 
 
 def write_output(file_name, func_list):
     out = open(file_name, 'w', newline='')
-    csv.writer(out).writerow(list(func_list[0].keys()))
+    row = list(func_list[0].keys())
+    del row[-1]
+    csv.writer(out).writerow(row)
     for func in func_list:
-        csv.writer(out).writerow(list(func.values()))
+        row = list(func.values())
+        del row[-1]
+        csv.writer(out).writerow(row)
 
 
 behaviors_json = read_json('behaviors.json')
@@ -94,10 +110,10 @@ for fun in behaviors_json["children"]:
     func_list.append(create_func_dict(fun, suites_csv, status_dict))
     func_set.add(func_list[-1]['func_name'])
 print(len(func_list))
-print(len(func_set))
 func_set = sorted(func_set)
 func_list = sorted(func_list, key=lambda k: k['func_name'])
 func_list = sorted(func_list, key=lambda k: k['suite'])
 func_list = sorted(func_list, key=lambda k: k['file_name'])
-merger_para_func(func_set, status_dict, func_list)
-#write_output('output.csv', func_list)
+func_list_without_para = merger_para_func(status_dict, func_list)
+verify(func_set, func_list_without_para, status_dict)
+write_output('output.csv', func_list_without_para)
