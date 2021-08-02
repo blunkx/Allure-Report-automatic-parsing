@@ -53,12 +53,19 @@ def create_func_dict(fun, suites_csv, status_dict):
             if check_path(temp['fullName'], row):
                 break
     topo_marker = [s for s in temp['extra']['tags'] if 'topology(' in s][0]
+    para_list = []
+    for para in temp['parameterValues']:
+        t = list(para)
+        t[0], t[-1] = '[', ']'
+        para_list.append(''.join(t))
     func_dict = {'suite': suite, 'file_name': file_name, 'topo_marker': topo_marker,
-                 'func_name': path, 'status': fun["status"], 'UID': fun["uid"]}
+                 'func_name': path, 'status': fun["status"], "parameter_list": list(), 'UID': fun["uid"]}
     if path not in status_dict:
         status_dict[path] = [fun['status']]
+        para_dict[path] = para_list
     else:
         status_dict[path] += [fun['status']]
+        para_dict[path] += para_list
     return func_dict
 
 
@@ -66,6 +73,7 @@ def merger_para_func(status_dict, func_list):
     new_list = func_list = list(
         {v['func_name']: v for v in func_list}.values())
     for row in new_list:
+        row['parameter_list'] = para_dict
         if status_dict[row['func_name']].count('broken') > 0 or status_dict[row['func_name']].count('failed') > 0:
             row['status'] = 'failed'
         elif status_dict[row['func_name']].count('passed') > 0:
@@ -82,6 +90,7 @@ def verify(func_set, func_list_without_para, status_dict):
     for func in func_name_list:
         try:
             status_dict[func]
+            # print(para_dict[func])
         except:
             print('Error!')
             exit()
@@ -106,6 +115,7 @@ suites_csv = read_csv('suites.csv')
 func_list = list()
 func_set = set()
 status_dict = dict()
+para_dict = dict()
 for fun in behaviors_json["children"]:
     func_list.append(create_func_dict(fun, suites_csv, status_dict))
     func_set.add(func_list[-1]['func_name'])

@@ -1,0 +1,7 @@
+#python3 -m pip freeze > requirements.txt
+#pip install -r requirements.txt
+
+
+#for downloading
+requests==2.26.0
+wget==3.2

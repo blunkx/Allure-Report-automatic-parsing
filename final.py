@@ -128,7 +128,6 @@ def write_output(file_name, func_list):
 
 print('Start Pasring!') if input(
     'Enter 1 to parse only, 2 to download and parse: ') == '1' else download()
-
 behaviors_json = read_json('behaviors.json')
 suites_csv = read_csv('suites.csv')
 func_list = list()
