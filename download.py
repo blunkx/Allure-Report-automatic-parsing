@@ -3,8 +3,9 @@ import os
 import zipfile
 
 
-url = input('Enter the url of the allure report: ')
-url += 'artifact/allure-report.zip'
+#url = input('Enter the url of the allure report: ')
+#url += 'artifact/allure-report.zip'
+url = 'https://jenkins.clounix.com/job/sonic/job/testbed/job/201911.clounix/job/sonic-mgmt/40/artifact/allure-report.zip'
 try:
     wget.download(url, os.getcwd())
 except:
@@ -20,10 +21,5 @@ else:
         except:
             print('unzip failed!')
 if not os.path.isdir('allure-report/data/test-cases') or not os.path.isdir('allure-report/data'):
-    print('Failed to open the directory')
-else:
-    all_json_list = os.listdir('allure-report/data/test-cases')
-    # for each in allJsonList:
-    # print(each)
-
-# parsing behaviors.json to get list of all functions
+    print('Failed to open the directory, check the integrity of the zip file!')
+    exit()
