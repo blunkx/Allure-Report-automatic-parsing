@@ -6,6 +6,15 @@ import requests
 from zipfile import ZipFile
 
 
+def download(url):
+    r = requests.get(url)
+    code = open("allure.zip", "wb")
+    code.write(r.content)
+    code.close()
+    zip_ref = ZipFile("allure.zip", 'r')
+    zip_ref.extractall()
+
+
 def read_json(file_name):
     # read json -> dict
     json_path = os.getcwd() + '/allure-report/data/' + file_name
@@ -26,38 +35,37 @@ def read_csv(file_name):
     return list(csv.reader(input_file, delimiter=','))
 
 
-def create_dict():
-    json_array = read_json('behaviors.json')
-    suites_rows = read_csv('suites.csv')
+def check_path(csv_path_lists, full_name_lists):
+    all_in_csv = True
+    for csv_path_list in csv_path_lists:
+        if (csv_path_list not in full_name_lists):
+            all_in_csv = False
+    return all_in_csv
+
+
+def create_dict(json_array, suites_rows, func_list):
+
     for fun in json_array["children"]:
         match = re.search("(\S+)(\[)(\S+)", fun["name"])
-        if match:
-            func_name = match.group(1)
-        else:
-            func_name = fun["name"]
+
+        func_name = match.group(1) if match else fun["name"]
+
         for row in suites_rows:
             if (fun["name"] == row[9]):
                 is_class = re.search("(\S+)(\[)(\S+)", row[6])
-                if (row[6] != "" and not is_class):
-                    path = row[5] + ".py" + "::" + row[6]
-                    lists = [row[5], row[6]]
-                else:
-                    path = row[5] + ".py"
-                    lists = [row[5]]
+
+                path, lists = (row[5] + ".py" + "::" +
+                               row[6], [row[5], row[6]]) if (row[6] != "" and not is_class) else (row[5] + ".py", [row[5]])
+
                 suite = row[4].replace(".", "/")
                 suite_list = row[4].split(".")
                 csv_path_lists = lists + suite_list
                 only_file_name = row[5]
                 break
 
-        if (suite == ""):
-            suite = "tests"
-        if suite != "":
-            file_name = suite + "/" + only_file_name + ".py"
-            path_list = suite + "/" + path + "::" + func_name
-        else:
-            file_name = only_file_name + ".py"
-            path_list = path + "::" + func_name
+        suite = "tests" if suite == "" else suite
+        file_name = suite + "/" + only_file_name + ".py"
+        path_list = suite + "/" + path + "::" + func_name
 
         uid_file = open("allure-report/data/test-cases/" + fun['uid'] +
                         ".json")
@@ -65,10 +73,7 @@ def create_dict():
         full_name = uid_array["fullName"]
         full_name_lists = re.split('\.|#', full_name)
 
-        all_in_csv = True
-        for csv_path_list in csv_path_lists:
-            if (csv_path_list not in full_name_lists):
-                all_in_csv = False
+        all_in_csv = check_path(csv_path_lists, full_name_lists)
 
         if (all_in_csv == False):
             suite_lists = suite.split("/")
@@ -76,14 +81,14 @@ def create_dict():
             for suite_list in suite_lists:
                 if (suite_list in full_name_lists):
                     full_name_lists.remove(suite_list)
+
             if (suite in full_name_lists):
                 full_name_lists.remove(suite)
 
-            if (suite != ""):
-                file_name = suite + "/" + full_name_lists[0] + ".py"
-            else:
-                file_name = full_name_lists[0] + ".py"
-            # print(file_name)
+            file_name = suite + "/" + \
+                full_name_lists[0] + \
+                ".py" if suite != "" else full_name_lists[0] + ".py"
+
             if(len(full_name_lists) == 2):
                 path_list = file_name + "::" + full_name_lists[1]
             elif (len(full_name_lists) == 3):
@@ -104,49 +109,56 @@ def create_dict():
 def write_output(file_name, func_list):
     out = open(file_name, 'w')
     csv.writer(out).writerow(
-        ['suite', 'file_name', 'topology', 'test_case', 'status'])
+        ['suite', 'file_name', 'topology', 'test_case', 'status', 'is_parameterixe', 'parameter'])
     for func in func_list:
         csv.writer(out).writerow(list(func.values()))
 
 
-url = "https://jenkins.clounix.com/job/sonic/job/testbed/job/201911.clounix/job/sonic-mgmt/40/artifact/allure-report.zip"
-#r = requests.get(url)
-#code = open("allure.zip", "wb")
-# code.write(r.content)
-# code.close()
-#zip_ref = ZipFile("allure.zip", 'r')
-# zip_ref.extractall()
-func_list = list()
-create_dict()
-for func in func_list:
-    same_funcs = list(
-        filter(lambda fun: fun['path_list'] == func["path_list"], func_list))
-    count_pass = 0
-    count_skip = 0
-    count_fail = 0
-    for same_func in same_funcs:
-        if (same_func["status"] == "passed"):
-            count_pass += 1
-        elif (same_func["status"] == "skipped"):
-            count_skip += 1
-        elif (same_func["status"] == "failed" or same_func["status"] == "broken"):
-            count_fail += 1
+def edit_status(func_list):
+    for func in func_list:
+        same_funcs = list(
+            filter(lambda fun: fun['path_list'] == func["path_list"], func_list))
+        count_pass, count_skip, count_fail = 0, 0, 0
+        for same_func in same_funcs:
+            if (same_func["status"] == "passed"):
+                count_pass += 1
+            elif (same_func["status"] == "skipped"):
+                count_skip += 1
+            elif (same_func["status"] == "failed" or same_func["status"] == "broken"):
+                count_fail += 1
 
-    if (count_fail > 0):
-        new_status = "failed"
-    elif (count_fail == 0 and count_pass == 0):
-        new_status = "skipped"
-    elif (count_fail == 0 and count_pass > 0):
-        new_status = "passed"
-    if (func["suite"] == "tests"):
-        func["suite"] = ""
-        file_name = func["file_name"].split("/")
-        file_name.remove("tests")
-        func["file_name"] = " ".join(file_name)
-        path_lists = func["path_list"].split("/")
-        path_lists.remove("tests")
-        func["path_list"] = " ".join(path_lists)
-    func["status"] = new_status
+        if (count_fail > 0):
+            new_status = "failed"
+        elif (count_fail == 0 and count_pass == 0):
+            new_status = "skipped"
+        elif (count_fail == 0 and count_pass > 0):
+            new_status = "passed"
+
+        func["status"] = new_status
+
+
+def remove_suites_tests(func_list):
+    for func in func_list:
+        if (func["suite"] == "tests"):
+            func["suite"] = ""
+            file_name = func["file_name"].split("/")
+            file_name.remove("tests")
+            func["file_name"] = "".join(file_name)
+            path_lists = func["path_list"].split("/")
+            path_lists.remove("tests")
+            func["path_list"] = "".join(path_lists)
+
+# download("https://jenkins.clounix.com/job/sonic/job/testbed/job/201911.clounix/job/sonic-mgmt/40/artifact/allure-report.zip")
+
+
+json_array = read_json('behaviors.json')
+suites_rows = read_csv('suites.csv')
+func_list = list()
+create_dict(json_array, suites_rows, func_list)
+
+edit_status(func_list)
+
+remove_suites_tests(func_list)
 
 func_list = sorted(func_list, key=lambda k: k['path_list'])
 func_list = sorted(func_list, key=lambda k: k['suite'])
