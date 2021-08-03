@@ -171,3 +171,5 @@ def dl(download):
 
 if __name__ == '__main__':
     dl()
+# file path or url
+# --rf
