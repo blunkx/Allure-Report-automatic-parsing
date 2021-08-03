@@ -78,7 +78,7 @@ def create_func_dict(fun, suites_csv, status_dict):
 def merger_para_func(status_dict, func_list):
     new_list = list({v["func_name"]: v for v in func_list}.values())
     for row in new_list:
-        row["isParameterized"] = "v" if len(status_dict[row["func_name"]]) > 1 else "x"
+        row["isParameterized"] = "v" if len(status_dict[row["func_name"]]) > 0 else "x"
         if (
             status_dict[row["func_name"]].count("broken") > 0
             or status_dict[row["func_name"]].count("failed") > 0
