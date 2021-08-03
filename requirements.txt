@@ -1,7 +1,16 @@
 #python3 -m pip freeze > requirements.txt
 #pip install -r requirements.txt
-
-
-#for downloading
+astor==0.8.1
+autopep8==1.5.7
+bytecode==0.12.0
+certifi==2021.5.30
+charset-normalizer==2.0.3
+click==8.0.1
+graphviz==0.17
+idna==3.2
+pycodestyle==2.7.0
 requests==2.26.0
+staticfg==0.9.5
+toml==0.10.2
+urllib3==1.26.6
 wget==3.2

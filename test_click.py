@@ -4,6 +4,10 @@ import zipfile
 import json
 import re
 import csv
+import click
+# url = input('Enter the url of the allure report: ')
+# url += 'artifact/allure-report.zip'
+# url = 'https://jenkins.clounix.com/job/sonic/job/testbed/job/201911.clounix/job/sonic-mgmt/40/artifact/allure-report.zip'
 
 
 def read_json(file_name):
@@ -12,7 +16,8 @@ def read_json(file_name):
     try:
         input_file = open(json_path)
     except:
-        print('Failed to open!')
+        click.echo('Failed to open Json!')
+        exit()
     return json.load(input_file)
 
 
@@ -22,7 +27,8 @@ def read_csv(file_name):
     try:
         input_file = open(csv_path)
     except:
-        print('Failed to open!')
+        click.echo('Failed to open CSV!')
+        exit()
     return list(csv.reader(input_file, delimiter=','))
 
 
@@ -53,27 +59,21 @@ def create_func_dict(fun, suites_csv, status_dict):
             if check_path(temp['fullName'], row):
                 break
     topo_marker = [s for s in temp['extra']['tags'] if 'topology(' in s][0]
-    para_list = []
-    for para in temp['parameterValues']:
-        t = list(para)
-        t[0], t[-1] = '[', ']'
-        para_list.append(''.join(t))
     func_dict = {'suite': suite, 'file_name': file_name, 'topo_marker': topo_marker,
-                 'func_name': path, 'status': fun["status"], "parameter_list": list(), 'UID': fun["uid"]}
+                 'func_name': path, 'status': fun["status"], 'isParameterized': 'x', 'UID': fun["uid"]}
     if path not in status_dict:
         status_dict[path] = [fun['status']]
-        para_dict[path] = para_list
     else:
         status_dict[path] += [fun['status']]
-        para_dict[path] += para_list
     return func_dict
 
 
 def merger_para_func(status_dict, func_list):
-    new_list = func_list = list(
+    new_list = list(
         {v['func_name']: v for v in func_list}.values())
     for row in new_list:
-        row['parameter_list'] = para_dict
+        row['isParameterized'] = 'v' if len(
+            status_dict[row['func_name']]) > 1 else 'x'
         if status_dict[row['func_name']].count('broken') > 0 or status_dict[row['func_name']].count('failed') > 0:
             row['status'] = 'failed'
         elif status_dict[row['func_name']].count('passed') > 0:
@@ -90,13 +90,11 @@ def verify(func_set, func_list_without_para, status_dict):
     for func in func_name_list:
         try:
             status_dict[func]
-            # print(para_dict[func])
         except:
-            print('Error!')
+            click.echo('Error!')
             exit()
-    print(len(func_set))
-    print(len(func_name_list))
-    print(len(status_dict))
+    click.echo('After merging parameterized test cases: %d' %
+               len(func_name_list))
 
 
 def write_output(file_name, func_list):
@@ -110,20 +108,66 @@ def write_output(file_name, func_list):
         csv.writer(out).writerow(row)
 
 
-behaviors_json = read_json('behaviors.json')
-suites_csv = read_csv('suites.csv')
-func_list = list()
-func_set = set()
-status_dict = dict()
-para_dict = dict()
-for fun in behaviors_json["children"]:
-    func_list.append(create_func_dict(fun, suites_csv, status_dict))
-    func_set.add(func_list[-1]['func_name'])
-print(len(func_list))
-func_set = sorted(func_set)
-func_list = sorted(func_list, key=lambda k: k['func_name'])
-func_list = sorted(func_list, key=lambda k: k['suite'])
-func_list = sorted(func_list, key=lambda k: k['file_name'])
-func_list_without_para = merger_para_func(status_dict, func_list)
-verify(func_set, func_list_without_para, status_dict)
-write_output('output.csv', func_list_without_para)
+def parse():
+    behaviors_json = read_json('behaviors.json')
+    suites_csv = read_csv('suites.csv')
+    func_list = list()
+    func_set = set()
+    status_dict = dict()
+    para_dict = dict()
+    for fun in behaviors_json["children"]:
+        func_list.append(create_func_dict(fun, suites_csv, status_dict))
+        func_set.add(func_list[-1]['func_name'])
+    click.echo('Total test cases: %d' % len(func_list))
+    func_set = sorted(func_set)
+    func_list = sorted(func_list, key=lambda k: k['func_name'])
+    func_list = sorted(func_list, key=lambda k: k['suite'])
+    func_list = sorted(func_list, key=lambda k: k['file_name'])
+    func_list_without_para = merger_para_func(status_dict, func_list)
+    verify(func_set, func_list_without_para, status_dict)
+    write_output('output.csv', func_list_without_para)
+
+
+@click.command()
+@click.option('--url', prompt='Enter the URL',
+              help='Enter the url before artifact')
+def get_url(url):
+    url += 'artifact/allure-report.zip'
+    try:
+        wget.download(url, os.getcwd())
+    except:
+        click.echo(
+            'Download failed, try again. Make sure you are connected the VPN and enter the correct URL.')
+        exit()
+    if not os.path.exists('allure-report.zip'):
+        click.echo('File doesn\'t exist!')
+    else:
+        with zipfile.ZipFile('allure-report.zip', 'r') as zip_ref:
+            try:
+                zip_ref.extractall(os.getcwd())
+                click.echo('\nUnzip Done!')
+            except:
+                click.echo('unzip failed!')
+    if not os.path.isdir('allure-report/data/test-cases') or not os.path.isdir('allure-report/data'):
+        click.echo(
+            'Failed to open the directory, check the integrity of the zip file!')
+        exit()
+    parse()
+
+
+@click.command()
+@click.option('--download', prompt='Download report? Enter T or F',
+              help='Select parse only or download + parse')
+def dl(download):
+    if download == 'T':
+        get_url()
+    elif download == 'F':
+        parse()
+        return
+
+    click.echo('Erro, Plese enter T or F!')
+    exit()
+
+
+if __name__ == '__main__':
+    dl()
