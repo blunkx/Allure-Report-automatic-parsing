@@ -4,6 +4,8 @@ import json
 import csv
 import requests
 from zipfile import ZipFile
+import click
+import wget
 
 
 def download(url):
@@ -13,6 +15,10 @@ def download(url):
     code.close()
     zip_ref = ZipFile("allure.zip", 'r')
     zip_ref.extractall()
+
+
+def download_wget(url):
+    wget.download(url, os.getcwd())
 
 
 def read_json(file_name):
@@ -43,7 +49,7 @@ def check_path(csv_path_lists, full_name_lists):
     return all_in_csv
 
 
-def create_dict(json_array, suites_rows, func_list):
+def create_dict(json_array, suites_rows, func_list, parameterize):
 
     for fun in json_array["children"]:
         match = re.search("(\S+)(\[)(\S+)", fun["name"])
@@ -105,6 +111,26 @@ def create_dict(json_array, suites_rows, func_list):
         }
         func_list.append(func_dict)
 
+        parameter = match.group(3) if match else ""
+        parameter = parameter.replace("]", "")
+        print(parameter)
+        if (parameter != ""):
+            parameter_list = list(parameter)
+            parameter_list.insert(0, "[")
+            parameter_list.append("]")
+        if (parameterize.get(path_list) == None):
+            parameterize[path_list] = list()
+        parameterize[path_list].append("".join(parameter_list))
+    for fun in func_list:
+        if (len(parameterize[fun["path_list"]]) > 1):
+            fun["is_parameterize"] = "v"
+        else:
+            fun["is_parameterize"] = "x"
+
+        #fun["parameter"] = parameterize[fun["path_list"]]
+        # if '[None]' in fun["parameter"]:
+            # fun["parameter"].remove('[None]')
+
 
 def write_output(file_name, func_list):
     out = open(file_name, 'w')
@@ -148,22 +174,29 @@ def remove_suites_tests(func_list):
             path_lists.remove("tests")
             func["path_list"] = "".join(path_lists)
 
-# download("https://jenkins.clounix.com/job/sonic/job/testbed/job/201911.clounix/job/sonic-mgmt/40/artifact/allure-report.zip")
+
+@click.command()
+@click.option('--url', help='allure-report url.')
+def all_flow(url):
+    # download_wget(url)
+    json_array = read_json('behaviors.json')
+    suites_rows = read_csv('suites.csv')
+    func_list = list()
+    parameterize = dict()
+    create_dict(json_array, suites_rows, func_list, parameterize)
+
+    edit_status(func_list)
+
+    remove_suites_tests(func_list)
+
+    func_list = sorted(func_list, key=lambda k: k['path_list'])
+    func_list = sorted(func_list, key=lambda k: k['suite'])
+    func_list = sorted(func_list, key=lambda k: k['file_name'])
+    func_list = list({v['path_list']: v for v in func_list}.values())
+
+    print("case number:" + str(len(func_list)))
+    write_output("output.csv", func_list)
 
 
-json_array = read_json('behaviors.json')
-suites_rows = read_csv('suites.csv')
-func_list = list()
-create_dict(json_array, suites_rows, func_list)
-
-edit_status(func_list)
-
-remove_suites_tests(func_list)
-
-func_list = sorted(func_list, key=lambda k: k['path_list'])
-func_list = sorted(func_list, key=lambda k: k['suite'])
-func_list = sorted(func_list, key=lambda k: k['file_name'])
-func_list = list({v['path_list']: v for v in func_list}.values())
-
-print(len(func_list))
-write_output("output.csv", func_list)
+if __name__ == '__main__':
+    all_flow()
