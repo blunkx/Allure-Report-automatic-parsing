@@ -16,7 +16,7 @@ def read_json(file_name):
     json_path = os.getcwd() + "/allure-report/data/" + file_name
     try:
         input_file = open(json_path)
-    except:
+    except Exception:
         click.echo("Failed to open Json!")
         exit()
     return json.load(input_file)
@@ -27,7 +27,7 @@ def read_csv(file_name):
     csv_path = os.getcwd() + "/allure-report/data/" + file_name
     try:
         input_file = open(csv_path)
-    except:
+    except Exception:
         click.echo("Failed to open CSV!")
         exit()
     return list(csv.reader(input_file, delimiter=","))
@@ -101,7 +101,7 @@ def verify(func_set, func_list_without_para, status_dict):
     for func in func_name_list:
         try:
             status_dict[func]
-        except:
+        except Exception:
             click.echo("Error!")
             exit()
     click.echo("After merging parameterized test cases: %d" % len(func_name_list))
@@ -144,7 +144,7 @@ def get_url(url):
     url += "artifact/allure-report.zip"
     try:
         wget.download(url, os.getcwd())
-    except:
+    except Exception:
         click.echo(
             "Download failed, try again. Make sure you are connected the VPN and enter the correct URL."
         )
@@ -156,7 +156,7 @@ def get_url(url):
             try:
                 zip_ref.extractall(os.getcwd())
                 click.echo("\nUnzip Done!")
-            except:
+            except Exception:
                 click.echo("unzip failed!")
     if not os.path.isdir("allure-report/data/test-cases") or not os.path.isdir(
         "allure-report/data"

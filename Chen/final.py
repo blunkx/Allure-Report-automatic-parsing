@@ -12,7 +12,7 @@ def download():
     url = "https://jenkins.clounix.com/job/sonic/job/testbed/job/201911.clounix/job/sonic-mgmt/40/artifact/allure-report.zip"
     try:
         wget.download(url, os.getcwd())
-    except:
+    except Exception:
         print("Download failed, try again. Make sure you are connected the VPN")
         exit()
     if not os.path.exists("allure-report.zip"):
@@ -22,7 +22,7 @@ def download():
             try:
                 zip_ref.extractall(os.getcwd())
                 print("\nUnzip Done!")
-            except:
+            except Exception:
                 print("unzip failed!")
     if not os.path.isdir("allure-report/data/test-cases") or not os.path.isdir(
         "allure-report/data"
@@ -36,7 +36,7 @@ def read_json(file_name):
     json_path = os.getcwd() + "/allure-report/data/" + file_name
     try:
         input_file = open(json_path)
-    except:
+    except Exception:
         print("Failed to open Json!")
         exit()
     return json.load(input_file)
@@ -47,7 +47,7 @@ def read_csv(file_name):
     csv_path = os.getcwd() + "/allure-report/data/" + file_name
     try:
         input_file = open(csv_path)
-    except:
+    except Exception:
         print("Failed to open CSV!")
         exit()
     return list(csv.reader(input_file, delimiter=","))
@@ -119,7 +119,7 @@ def verify(func_set, func_list_without_para, status_dict):
     for func in func_name_list:
         try:
             status_dict[func]
-        except:
+        except Exception:
             print("Error!")
             exit()
     print(len(func_set))

@@ -9,7 +9,7 @@ def read_json(file_name):
     json_path = os.getcwd() + "/allure-report/data/" + file_name
     try:
         input_file = open(json_path)
-    except:
+    except Exception:
         print("Failed to open!")
         exit()
     return json.load(input_file)
@@ -20,7 +20,7 @@ def read_csv(file_name):
     csv_path = os.getcwd() + "/allure-report/data/" + file_name
     try:
         input_file = open(csv_path)
-    except:
+    except Exception:
         print("Failed to open!")
         exit()
     return list(csv.reader(input_file, delimiter=","))

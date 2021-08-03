@@ -10,7 +10,7 @@ def verify(func_set, func_list_without_para, status_dict):
         try:
             status_dict[func]
             # print(para_dict[func])
-        except:
+        except Exception:
             print("Error!")
             exit()
     print(len(func_set))
