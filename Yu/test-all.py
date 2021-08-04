@@ -1,13 +1,25 @@
-from download import *
-from parsing import *
-from output import *
+from download import download_wget
+from parsing import read_json
+from parsing import read_csv
+from parsing import create_dict
+from parsing import edit_status
+from parsing import remove_suites_tests
+from output import write_output
+import re
 import click
+import os
+import shutil
 
 
 @click.command()
-@click.option("--url", help="allure-report url.")
-def all_flow(url):
-    download_wget(url)
+@click.option("-r", "--reportfile", "url", help="allure-report url.")
+@click.option("-o", "--output", "path", help="allure-report url.")
+def all_flow(url, path):
+    if re.search(r"(http:\/\/)\S+", url) or re.search(r"https:\/\/\S+", url):
+        download_wget(url)
+    else:
+        shutil.move(url, os.getcwd() + "/allure-report")
+
     json_array = read_json("behaviors.json")
     suites_rows = read_csv("suites.csv")
     func_list = list()
@@ -24,7 +36,10 @@ def all_flow(url):
     func_list = list({v["path_list"]: v for v in func_list}.values())
 
     print("case number:" + str(len(func_list)))
-    write_output("output.csv", func_list)
+    if path is not None:
+        write_output(path, func_list)
+    else:
+        print(func_list)
 
 
 if __name__ == "__main__":
