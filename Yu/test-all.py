@@ -18,7 +18,11 @@ def all_flow(url, path):
     if re.search(r"(http:\/\/)\S+", url) or re.search(r"https:\/\/\S+", url):
         download_wget(url)
     else:
-        shutil.move(url, os.getcwd() + "/allure-report")
+        try:
+            shutil.move(url, os.getcwd() + "/allure-report")
+        except Exception:
+            print("Path Error")
+            exit()
 
     json_array = read_json("behaviors.json")
     suites_rows = read_csv("suites.csv")

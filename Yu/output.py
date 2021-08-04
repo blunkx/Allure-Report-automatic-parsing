@@ -1,8 +1,14 @@
 import csv
+import os
 
 
-def write_output(file_name, func_list):
-    out = open(file_name, "w")
+def write_output(file_path, func_list):
+    file_path_list = file_path.split("/")
+    file_name = file_path_list[-1]
+    file_path_list.remove(file_path_list[-1])
+    final_path = "/".join(file_path_list)
+    test = os.path.join(final_path, file_name)
+    out = open(test, "w")
     csv.writer(out).writerow(
         [
             "suite",
