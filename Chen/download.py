@@ -9,8 +9,6 @@ def check_input(input):
         target = os.getcwd() + "/allure-report.zip"
         shutil.copyfile(input, target)
         if ".zip" in input:
-            # print(input)
-            # print(target)
             extract()
     elif "http" in input:
         download(input)
@@ -24,6 +22,7 @@ def download(url):
     # url = "https://jenkins.clounix.com/job/sonic/job/testbed/job/201911.clounix/job/sonic-mgmt/40/artifact/allure-report.zip"
     try:
         wget.download(url, os.getcwd())
+        print()
     except Exception:
         print("Download failed, try again. Make sure you are connected the VPN!")
         exit()
