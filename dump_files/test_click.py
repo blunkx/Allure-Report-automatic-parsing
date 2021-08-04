@@ -185,7 +185,3 @@ def dl(download):
 
 if __name__ == "__main__":
     dl()
-    print(1)
-# file path or url
-# --reportfile -r -f
-# output --output -o path and name if no argument print
