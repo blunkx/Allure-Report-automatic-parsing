@@ -1,10 +1,6 @@
 from download import download_wget
-from parsing import read_json
-from parsing import read_csv
-from parsing import create_dict
-from parsing import edit_status
-from parsing import remove_suites_tests
 from output import write_output
+import parsing
 import re
 import click
 import os
@@ -24,15 +20,15 @@ def all_flow(url, path):
             print("Path Error")
             exit()
 
-    json_array = read_json("behaviors.json")
-    suites_rows = read_csv("suites.csv")
+    json_array = parsing.read_json("behaviors.json")
+    suites_rows = parsing.read_csv("suites.csv")
     func_list = list()
     parameterize = dict()
-    create_dict(json_array, suites_rows, func_list, parameterize)
+    parsing.create_dict(json_array, suites_rows, func_list, parameterize)
 
-    edit_status(func_list)
+    parsing.edit_status(func_list)
 
-    remove_suites_tests(func_list)
+    parsing.remove_suites_tests(func_list)
 
     func_list = sorted(func_list, key=lambda k: k["path_list"])
     func_list = sorted(func_list, key=lambda k: k["suite"])

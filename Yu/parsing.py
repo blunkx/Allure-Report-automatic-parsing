@@ -27,6 +27,7 @@ def read_csv(file_name):
 
 
 def check_path(csv_path_lists, full_name_lists):
+    # check behavier.csv is same with UID.json
     all_in_csv = True
     for csv_path_list in csv_path_lists:
         if csv_path_list not in full_name_lists:
@@ -35,22 +36,24 @@ def check_path(csv_path_lists, full_name_lists):
 
 
 def create_dict(json_array, suites_rows, func_list, parameterize):
-
+    # create all test function lists
     regex_function_name = re.compile(r"(\S+)(\[)(.*)")
     for fun in json_array["children"]:
-        match = regex_function_name.search(fun["name"])
+        function_name_match = regex_function_name.search(fun["name"])
 
-        func_name = match.group(1) if match else fun["name"]
+        func_name = function_name_match.group(1) if function_name_match else fun["name"]
 
+        # find more info in suites csv
         for row in suites_rows:
             if fun["name"] == row[9]:
                 is_class = regex_function_name.search(row[6])
 
-                path, lists = (
-                    (row[5] + ".py" + "::" + row[6], [row[5], row[6]])
-                    if (row[6] != "" and not is_class)
-                    else (row[5] + ".py", [row[5]])
-                )
+                if row[6] != "" and not is_class:
+                    path = row[5] + ".py" + "::" + row[6]
+                    lists = [row[5], row[6]]
+                else:
+                    path = row[5] + ".py"
+                    lists = [row[5]]
 
                 suite = row[4].replace(".", "/")
                 suite_list = row[4].split(".")
@@ -58,15 +61,19 @@ def create_dict(json_array, suites_rows, func_list, parameterize):
                 only_file_name = row[5]
                 break
 
+        # add suites if it is null
         suite = "tests" if suite == "" else suite
         file_name = suite + "/" + only_file_name + ".py"
         path_list = suite + "/" + path + "::" + func_name
+
+        # read UID.json
         uid_array = read_json("test-cases/" + fun["uid"] + ".json")
         full_name = uid_array["fullName"]
         full_name_lists = re.split(r"\.|#", full_name)
 
         all_in_csv = check_path(csv_path_lists, full_name_lists)
 
+        # if suites csv path is not same with UID.json
         if all_in_csv is False:
             suite_lists = suite.split("/")
 
@@ -77,11 +84,7 @@ def create_dict(json_array, suites_rows, func_list, parameterize):
             if suite in full_name_lists:
                 full_name_lists.remove(suite)
 
-            file_name = (
-                suite + "/" + full_name_lists[0] + ".py"
-                if suite != ""
-                else full_name_lists[0] + ".py"
-            )
+            file_name = suite + "/" + full_name_lists[0] + ".py"
 
             if len(full_name_lists) == 2:
                 path_list = file_name + "::" + full_name_lists[1]
@@ -90,7 +93,10 @@ def create_dict(json_array, suites_rows, func_list, parameterize):
                     file_name + "::" + full_name_lists[1] + "::" + full_name_lists[2]
                 )
 
+        # get test_function topology
         topo = [s for s in uid_array["extra"]["tags"] if "topology(" in s][0]
+
+        # create function dictionary and add func_list
         func_dict = {
             "suite": suite,
             "file_name": file_name,
@@ -100,8 +106,9 @@ def create_dict(json_array, suites_rows, func_list, parameterize):
         }
         func_list.append(func_dict)
 
-        if match:
-            parameter = match.group(3)
+        # if have parameter get it and add to parameterize dict
+        if function_name_match:
+            parameter = function_name_match.group(3)
             parameter = parameter.replace("]", "")
             parameter_list = list(parameter)
             parameter_list.insert(0, "[")
@@ -114,6 +121,11 @@ def create_dict(json_array, suites_rows, func_list, parameterize):
                 parameterize[path_list] = list()
             parameter = ""
 
+    add_parameter_in_func_list(func_list, parameterize)
+
+
+def add_parameter_in_func_list(func_list, parameterize):
+    # check the function is or isn't parameterize and add the parameter list
     for fun in func_list:
         if len(parameterize[fun["path_list"]]) > 0:
             fun["is_parameterize"] = "v"
@@ -125,6 +137,7 @@ def create_dict(json_array, suites_rows, func_list, parameterize):
 
 
 def edit_status(func_list):
+    # merage the status with parameterize function
     for func in func_list:
         same_funcs = list(
             filter(lambda fun: fun["path_list"] == func["path_list"], func_list)
@@ -149,6 +162,7 @@ def edit_status(func_list):
 
 
 def remove_suites_tests(func_list):
+    # if the suites remove suites
     for func in func_list:
         if func["suite"] == "tests":
             func["suite"] = ""
