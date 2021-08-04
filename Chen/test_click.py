@@ -53,7 +53,7 @@ def create_func_dict(fun, suites_csv, status_dict):
             path = file_name
             if row[6] != "" and "[" not in row[6]:
                 path += "::" + row[6]
-            match = re.search("(\S+)(\[)(\S+)", fun["name"])
+            match = re.search(r"(\S+)(\[)(\S+)", fun["name"])
             func_name = match.group(1) if match else fun["name"]
             path += "::" + func_name
             if check_path(temp["fullName"], row):

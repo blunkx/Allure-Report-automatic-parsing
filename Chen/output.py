@@ -1,4 +1,5 @@
 import csv
+import os
 
 
 def verify(func_set, func_list_without_para, status_dict):
@@ -19,11 +20,20 @@ def verify(func_set, func_list_without_para, status_dict):
 
 
 def write_output(file_name, func_list):
-    out = open(file_name, "w", newline="")
-    row = list(func_list[0].keys())
-    del row[-1]
-    csv.writer(out).writerow(row)
-    for func in func_list:
-        row = list(func.values())
+    if file_name == "":
+        row = list(func_list[0].keys())
+        del row[-1]
+        print(row)
+        for func in func_list:
+            row = list(func.values())
+            del row[-1]
+            print(row)
+    else:
+        out = open(file_name, "w", newline="")
+        row = list(func_list[0].keys())
         del row[-1]
         csv.writer(out).writerow(row)
+        for func in func_list:
+            row = list(func.values())
+            del row[-1]
+            csv.writer(out).writerow(row)
