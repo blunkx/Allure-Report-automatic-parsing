@@ -36,7 +36,7 @@ def read_json(file_name):
 def read_csv(file_name):
     """
     If the file is not exist, throw an exception.
-    Argst:
+    Args:
         file_name(str): file name to read
     Returns:
         list(csv.reader(input_file, delimiter=","))(list): two dimentional list from csv
@@ -52,7 +52,7 @@ def read_csv(file_name):
 
 def check_path(fullname, row_from_suite):
     """
-    Argst:
+    Args:
         file name(str): read from uid.json
         row(list): read from suite.csv
     Returns:
@@ -69,7 +69,7 @@ def check_path(fullname, row_from_suite):
 def create_func_dict(fun, suites_csv, status_dict, para_dict):
     """
     Create the dict to represent the detail of each function.
-    Argst:
+    Args:
         fun(dict): function name from behavior.json
         suites_csv(list): two dimentinal list read from suite.csv
         status_dict(dict): function name: [status1, status2]
@@ -119,7 +119,7 @@ def create_func_dict(fun, suites_csv, status_dict, para_dict):
 def sort_func_list(func_list):
     """
     First sort all functions by name, then by suite, and finally by file name.
-    Argst:
+    Args:
         func_list(list): lsit of all functions
     Returns:
         func_list(list): list after sorting
@@ -132,12 +132,13 @@ def sort_func_list(func_list):
 
 def create_func_list():
     """
-    Argst: None
+    Create the sorted list of all functions and two dicts to
+    Args: None
     Returns:
         fun(dict): function name from behavior.json
         status_dict(dict): function name: [status1, status2]
         para_dict(dict): function name: [para1, para2]
-    Create the sorted list of all functions and
+
     """
     suite_csv = read_csv("suites.csv")
     func_list = list()
@@ -153,7 +154,7 @@ def merge_para_func(func_list, status_dict, para_dict):
     """
     Merge all parameterized functions.
     Determine the status and parameter of each function after merging.
-    Argst:
+    Args:
         func_list(list): list of functions(dict)
         status_dict(dict): [function name: [status1, status2]]
         para_dict: [function name: [para1, para2]]

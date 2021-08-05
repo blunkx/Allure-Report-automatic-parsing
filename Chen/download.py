@@ -15,7 +15,7 @@ import wget
 
 def check_input(input_from_r):
     """
-    Argst:
+    Args:
         input_from_r(str): the argument from user
     Returns:
         None
@@ -35,7 +35,7 @@ def check_input(input_from_r):
 
 def download(url):
     """
-    Argst:
+    Args:
         url(str)
     Returns:
         None
@@ -54,7 +54,7 @@ def download(url):
 
 def extract():
     """
-    Argst:
+    Args:
         None
     Returns:
         None

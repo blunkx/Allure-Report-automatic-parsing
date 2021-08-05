@@ -36,7 +36,7 @@ def verify(func_list, status_dict, para_dict, func_list_without_para):
 
 def write_output(file_path, func_list):
     """
-    Argst:
+    Args:
         file_path(str)
         function_list(list)
     Returns:

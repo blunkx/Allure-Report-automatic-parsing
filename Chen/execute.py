@@ -11,7 +11,7 @@ import output
 @click.option("-o", "--output", "out_path", default="", help="Enter the Path to output")
 def exe(url_path, out_path):
     """
-    Argst:
+    Args:
         url_path(str)
         output_path(str)
     Returns:
