@@ -124,6 +124,7 @@ venv.bak/
 *.csv
 /allure-report
 /.vscode
+*.txt
 # mypy
 .mypy_cache/
 .dmypy.json
