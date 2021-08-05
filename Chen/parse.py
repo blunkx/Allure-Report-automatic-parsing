@@ -1,32 +1,63 @@
+"""
+The module include methods needed to parse the allure-report.
+Method list:
+    read_json
+    read_csv
+    check_path
+    create_func_dict
+    sort_func_list
+    create_func_list
+    merge_para_func
+"""
 import os
 import json
 import re
 import csv
+import sys
 
 
 def read_json(file_name):
-    # read json -> dict
+    """
+    If the file is not exist, throw an exception.
+    Args:
+        file_name(str): file name to read
+    Returns:
+        json.load(input_file)(dict): Data read from json
+    """
     json_path = os.getcwd() + "/allure-report/data/" + file_name
     try:
-        input_file = open(json_path)
+        with open(json_path) as input_file:
+            return json.load(input_file)
     except Exception:
         print("Failed to open!")
-        exit()
-    return json.load(input_file)
+        sys.exit()
 
 
 def read_csv(file_name):
-    # read csv -> 2d list
+    """
+    If the file is not exist, throw an exception.
+    Argst:
+        file_name(str): file name to read
+    Returns:
+        list(csv.reader(input_file, delimiter=","))(list): two dimentional list from csv
+    """
     csv_path = os.getcwd() + "/allure-report/data/" + file_name
     try:
-        input_file = open(csv_path)
+        with open(csv_path) as input_file:
+            return list(csv.reader(input_file, delimiter=","))
     except Exception:
         print("Failed to open!")
-        exit()
-    return list(csv.reader(input_file, delimiter=","))
+        sys.exit()
 
 
 def check_path(fullname, row_from_suite):
+    """
+    Argst:
+        file name(str): read from uid.json
+        row(list): read from suite.csv
+    Returns:
+        bool: If the path from row corresponds to the full name return True else False.
+    """
     name = row_from_suite[4:9]
     name = [x for x in name if x != ""]
     for i in name:
@@ -36,6 +67,16 @@ def check_path(fullname, row_from_suite):
 
 
 def create_func_dict(fun, suites_csv, status_dict, para_dict):
+    """
+    Create the dict to represent the detail of each function.
+    Argst:
+        fun(dict): function name from behavior.json
+        suites_csv(list): two dimentinal list read from suite.csv
+        status_dict(dict): function name: [status1, status2]
+        para_dict(dict): function name: [para1, para2]
+    Returns:
+        para_dict(dict): Contining info of each function
+    """
     uid_name = "test-cases/" + fun["uid"] + ".json"
     temp = read_json(uid_name)
     para_list = []
@@ -51,7 +92,8 @@ def create_func_dict(fun, suites_csv, status_dict, para_dict):
             func_name = match.group(1) if match else fun["name"]
             path += "::" + func_name
             if check_path(temp["fullName"], row):
-                para_list.append("[" + match.group(3)) if match else ""
+                if match:
+                    para_list.append("[" + match.group(3))
                 break
     topo_marker = [s for s in temp["extra"]["tags"] if "topology(" in s][0]
 
@@ -61,7 +103,7 @@ def create_func_dict(fun, suites_csv, status_dict, para_dict):
         "topo_marker": topo_marker,
         "func_name": path,
         "status": fun["status"],
-        "isParameterized": "x",
+        "Parameterized": "x",
         "parameter_list": "s",
         "UID": fun["uid"],
     }
@@ -75,17 +117,52 @@ def create_func_dict(fun, suites_csv, status_dict, para_dict):
 
 
 def sort_func_list(func_list):
+    """
+    First sort all functions by name, then by suite, and finally by file name.
+    Argst:
+        func_list(list): lsit of all functions
+    Returns:
+        func_list(list): list after sorting
+    """
     func_list = sorted(func_list, key=lambda k: k["func_name"])
     func_list = sorted(func_list, key=lambda k: k["suite"])
     func_list = sorted(func_list, key=lambda k: k["file_name"])
     return func_list
 
 
-def merge_para_func(status_dict, func_list, para_dict):
+def create_func_list():
+    """
+    Argst: None
+    Returns:
+        fun(dict): function name from behavior.json
+        status_dict(dict): function name: [status1, status2]
+        para_dict(dict): function name: [para1, para2]
+    Create the sorted list of all functions and
+    """
+    suite_csv = read_csv("suites.csv")
+    func_list = list()
+    status_dict = dict()
+    para_dict = dict()
+    for fun in read_json("behaviors.json")["children"]:
+        func_list.append(create_func_dict(fun, suite_csv, status_dict, para_dict))
+    func_list = sort_func_list(func_list)
+    return func_list, status_dict, para_dict
+
+
+def merge_para_func(func_list, status_dict, para_dict):
+    """
+    Merge all parameterized functions.
+    Determine the status and parameter of each function after merging.
+    Argst:
+        func_list(list): list of functions(dict)
+        status_dict(dict): [function name: [status1, status2]]
+        para_dict: [function name: [para1, para2]]
+    Returns:
+        new_list(list): funcion list after merging
+    """
     new_list = func_list = list({v["func_name"]: v for v in func_list}.values())
     for row in new_list:
-        # print(status_dict[row["func_name"]])
-        row["isParameterized"] = "x" if not para_dict[row["func_name"]] else "v"
+        row["Parameterized"] = "x" if not para_dict[row["func_name"]] else "v"
         row["parameter_list"] = ", ".join(para_dict[row["func_name"]])
         if (
             status_dict[row["func_name"]].count("broken") > 0
