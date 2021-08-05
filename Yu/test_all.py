@@ -1,10 +1,11 @@
+import re
+import sys
+import os
+import shutil
+import click
 from download import download_wget
 from output import write_output
 import parsing
-import re
-import click
-import os
-import shutil
 
 
 @click.command()
@@ -18,7 +19,7 @@ def all_flow(url, path):
             shutil.move(url, os.getcwd() + "/allure-report")
         except Exception:
             print("Path Error")
-            exit()
+            sys.exit()
 
     json_array = parsing.read_json("behaviors.json")
     suites_rows = parsing.read_csv("suites.csv")

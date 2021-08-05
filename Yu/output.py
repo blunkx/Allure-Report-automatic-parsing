@@ -11,21 +11,20 @@ def write_output(file_path, func_list):
     final_path = "/".join(file_path_list)
 
     test = os.path.join(final_path, file_name)
-    out = open(test, "w")
+    with open(test, "w") as out:
+        # add heading
+        csv.writer(out).writerow(
+            [
+                "suite",
+                "file_name",
+                "topology",
+                "test_case",
+                "status",
+                "is_parameterize",
+                "parameter",
+            ]
+        )
 
-    # add heading
-    csv.writer(out).writerow(
-        [
-            "suite",
-            "file_name",
-            "topology",
-            "test_case",
-            "status",
-            "is_parameterize",
-            "parameter",
-        ]
-    )
-
-    # write content
-    for func in func_list:
-        csv.writer(out).writerow(list(func.values()))
+        # write content
+        for func in func_list:
+            csv.writer(out).writerow(list(func.values()))
