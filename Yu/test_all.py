@@ -1,3 +1,4 @@
+""" Test allure-report main """
 import re
 import sys
 import os
@@ -9,9 +10,20 @@ import parsing
 
 
 @click.command()
-@click.option("-r", "--reportfile", "url", help="allure-report url.")
-@click.option("-o", "--output", "path", help="allure-report url.")
+@click.option("-r", "--reportfile", "url", help="allure-report url or dir.")
+@click.option("-o", "--output", "path", help="output csv dir.")
 def all_flow(url, path):
+    """
+    Click command all test flow
+
+        Parameters:
+                url (string): The url of download or dir
+                path (string): Output csv path
+
+        Returns:
+                no return
+
+    """
     if re.search(r"(http:\/\/)\S+", url) or re.search(r"https:\/\/\S+", url):
         download_wget(url)
     else:
@@ -23,9 +35,8 @@ def all_flow(url, path):
 
     json_array = parsing.read_json("behaviors.json")
     suites_rows = parsing.read_csv("suites.csv")
-    func_list = list()
-    parameterize = dict()
-    parsing.create_dict(json_array, suites_rows, func_list, parameterize)
+
+    func_list = parsing.create_dict(json_array, suites_rows)
 
     parsing.edit_status(func_list)
 
