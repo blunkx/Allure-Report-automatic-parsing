@@ -95,8 +95,10 @@ def create_func_dict(fun, suites_csv, status_dict, para_dict):
                 if match:
                     para_list.append("[" + match.group(3))
                 break
-    topo_marker = [s for s in temp["extra"]["tags"] if "topology(" in s][0]
-
+    try:
+        topo_marker = [s for s in temp["extra"]["tags"] if "topology(" in s][0]
+    except:
+        topo_marker = ""
     func_dict = {
         "suite": suite,
         "file_name": file_name,

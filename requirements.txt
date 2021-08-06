@@ -1,16 +1,28 @@
-#python3 -m pip freeze > requirements.txt
-#pip install -r requirements.txt
+appdirs==1.4.4
 astor==0.8.1
+astroid==2.6.6
 autopep8==1.5.7
+black==21.7b0
 bytecode==0.12.0
 certifi==2021.5.30
 charset-normalizer==2.0.3
 click==8.0.1
+flake8==3.9.2
 graphviz==0.17
 idna==3.2
+isort==5.9.3
+lazy-object-proxy==1.6.0
+mccabe==0.6.1
+mypy-extensions==0.4.3
+pathspec==0.9.0
 pycodestyle==2.7.0
+pyflakes==2.3.1
+pylint==2.9.6
+regex==2021.7.6
 requests==2.26.0
 staticfg==0.9.5
 toml==0.10.2
+tomli==1.2.0
 urllib3==1.26.6
 wget==3.2
+wrapt==1.12.1

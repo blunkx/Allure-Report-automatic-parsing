@@ -15,14 +15,14 @@ import wget
 
 def check_input(input_from_r):
     """
+    Determine whether the input is an url or a path.
     Args:
         input_from_r(str): the argument from user
     Returns:
         None
-    Determine whether the input is an url or a path.
     """
     if os.path.exists(input_from_r):
-        target = os.getcwd() + "/allure-report.zip"
+        target = os.path.join(os.getcwd() + "allure-report.zip")
         shutil.copyfile(input_from_r, target)
         if ".zip" in input_from_r:
             extract()
@@ -35,17 +35,18 @@ def check_input(input_from_r):
 
 def download(url):
     """
+    Download the file from url by using wget.
+    If download failed, throw an exception.
     Args:
         url(str)
     Returns:
         None
-    Download the file from url by using wget.
-    If download failed, throw an exception.
+
     """
-    url += "artifact/allure-report.zip"
+    # url = os.path.join(url, "artifact", "allure-report.zip")
+    print(url)
     try:
         wget.download(url, os.getcwd())
-        print()
     except Exception:
         print("Download failed, try again. Make sure you are connected the VPN!")
         sys.exit()
@@ -54,12 +55,12 @@ def download(url):
 
 def extract():
     """
+    Extract the zip file at work directory.
+    If extract failed, throw an exception.
     Args:
         None
     Returns:
         None
-    Extract the zip file at work directory.
-    If extract failed, throw an exception.
     """
     if not os.path.exists("allure-report.zip"):
         print("File doesn't exist!")
@@ -71,8 +72,9 @@ def extract():
                 print("\nUnzip Done!")
             except Exception:
                 print("unzip failed!")
-    if not os.path.isdir("allure-report/data/test-cases") or not os.path.isdir(
-        "allure-report/data"
-    ):
+
+    if not os.path.isdir(
+        os.path.join("allure-report", "data", "test-cases")
+    ) or not os.path.isdir(os.path.join("allure-report", "data")):
         print("Failed to open the directory")
         sys.exit()
