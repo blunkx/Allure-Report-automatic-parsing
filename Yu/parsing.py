@@ -142,24 +142,34 @@ def get_current_suite_and_path_list_and_topo_and_filename(pass_value_dic):
     if all_in_csv is False:
         suite_lists = suite.split("/")
 
-        for suite_list in suite_lists:
-            if suite_list in full_name_lists:
-                full_name_lists.remove(suite_list)
+        if len(suite_lists) >= 2:
+            for suite_list in suite_lists:
+                if suite_list in full_name_lists:
+                    full_name_lists.remove(suite_list)
+        elif len(suite_lists) == 1:
+            if suite_lists[0] in full_name_lists:
+                full_name_lists.remove(suite_lists[0])
+            else:
+                if suite != "tests":
+                    suite = full_name_lists[0]
+                    del full_name_lists[0]
 
         if suite in full_name_lists:
             full_name_lists.remove(suite)
-
         file_name = suite + "/" + full_name_lists[0] + ".py"
 
         if len(full_name_lists) == 2:
             path_list = file_name + "::" + full_name_lists[1]
-        else:
+        elif len(full_name_lists) == 3:
             path_list = (
                 file_name + "::" + full_name_lists[1] + "::" + full_name_lists[2]
             )
 
     # get test_function topology
-    topo = [s for s in uid_array["extra"]["tags"] if "topology(" in s][0]
+    try:
+        topo = [s for s in uid_array["extra"]["tags"] if "topology(" in s][0]
+    except Exception:
+        topo = ""
     return {
         "suite": suite,
         "path_list": path_list,
