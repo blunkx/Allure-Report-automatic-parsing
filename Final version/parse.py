@@ -81,10 +81,14 @@ def create_func_dict(fun, suites_csv, status_dict, para_dict):
     temp = read_json(uid_name)
     para_list = []
     for row in suites_csv:
+        # example row
+        # Status	Start Time	Stop Time	Duration in ms	Parent Suite	Suite	Sub Suite	Test Class	Test Method    Name    Description
+        # 0         1           2           3               4               5       6           7           8              9       10
         if fun["name"] == row[9]:
             row[4] = "" if row[4] == "tests" else row[4]
             suite = row[4].replace(".", "/")
-            file_name = suite + "/" + row[5] + ".py" if suite != "" else row[5] + ".py"
+            file_name = suite + "/" + row[5] + \
+                ".py" if suite != "" else row[5] + ".py"
             path = file_name
             if row[6] != "" and "[" not in row[6]:
                 path += "::" + row[6]
@@ -147,7 +151,8 @@ def create_func_list():
     status_dict = dict()
     para_dict = dict()
     for fun in read_json("behaviors.json")["children"]:
-        func_list.append(create_func_dict(fun, suite_csv, status_dict, para_dict))
+        func_list.append(create_func_dict(
+            fun, suite_csv, status_dict, para_dict))
     func_list = sort_func_list(func_list)
     return func_list, status_dict, para_dict
 
@@ -163,7 +168,8 @@ def merge_para_func(func_list, status_dict, para_dict):
     Returns:
         new_list(list): funcion list after merging
     """
-    new_list = func_list = list({v["func_name"]: v for v in func_list}.values())
+    new_list = func_list = list(
+        {v["func_name"]: v for v in func_list}.values())
     for row in new_list:
         row["Parameterized"] = "x" if not para_dict[row["func_name"]] else "v"
         row["parameter_list"] = ", ".join(para_dict[row["func_name"]])
