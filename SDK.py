@@ -13,9 +13,8 @@ def read_csv(file_name):
     Returns:
         list(csv.reader(input_file, delimiter=","))(list): two dimentional list from csv
     """
-    # csv_path = os.getcwd() + "/allure-report/data/" + file_name
-    csv_path = file_name
-
+    csv_path = os.getcwd() + "/allure-report/data/" + file_name
+    # csv_path = file_name
     try:
         with open(csv_path) as input_file:
             return list(csv.reader(input_file, delimiter=","))
@@ -25,12 +24,10 @@ def read_csv(file_name):
 
 
 def get_case_num():
-    csv_path = "retry-trend.json"
+    csv_path = os.getcwd() + "/allure-report/history/retry-trend.json"
     try:
         with open(csv_path) as input_file:
             data = json.load(input_file)
-            print(type(data))
-            print(data[0]["buildOrder"])
             # return the case number
             return data[0]["buildOrder"]
     except Exception:
@@ -52,37 +49,50 @@ def sort_func_list(func_list):
     return func_list
 
 
+def create_func_list(suite_csv):
+    """
+    Create the sorted list of all functions and two dicts to
+    Args: 
+        suites_csv(list): two dimentinal list read from suite.csv
+    Returns:
+        result(list): list of all functions, each function is stored in a dict
+    """
+    result = list()
+    for row in suite_csv:
+        suite = row[4]
+        file_name = row[4] + "/" + row[5] + ".py"
+        topo_marker = ""
+        func_name = file_name + "::" + row[9]
+        # Status	Start Time	Stop Time	Duration in ms	Parent Suite	Suite	Sub Suite	Test Class	Test Method    Name    Description
+        # 0         1           2           3               4               5       6           7           8              9       10
+
+        # suite = parent_suite
+        # file_name = parent_suite + suite + .py
+        # topo_marker = ?
+        # func_name = file_name + :: + name
+        # status
+        match = "x" if row[5] not in row[9] else ""
+        #print(row[5], "", row[9])
+        func_dict = {
+            "suite": suite,
+            "file_name": file_name,
+            "topo_marker": topo_marker,
+            "func_name": func_name,
+            "status": row[0],
+            "match": match,
+        }
+        result.append(func_dict)
+    return result
+
+
 suite_csv = read_csv("suites.csv")
 suite_csv.pop(0)
-result = list()
-for row in suite_csv:
-    suite = row[4]
-    file_name = row[4] + "/" + row[5] + ".py"
-    topo_marker = ""
-    func_name = file_name + "::" + row[9]
-    func_dict = {
-        "suite": suite,
-        "file_name": file_name,
-        "topo_marker": topo_marker,
-        "func_name": func_name,
-        "status": row[0],
-    }
-    result.append(func_dict)
+result = create_func_list(suite_csv)
 result = sort_func_list(result)
 file_path = "sdk_tests #{}.csv".format(get_case_num())
 with open(file_path, "w", newline="") as out:
     row = list(result[0].keys())
-    # del row[-1]
     csv.writer(out).writerow(row)
     for func in result:
         row = list(func.values())
-        # del row[-1]
         csv.writer(out).writerow(row)
-# Status	Start Time	Stop Time	Duration in ms	Parent Suite	Suite	Sub Suite	Test Class	Test Method    Name    Description
-# 0         1           2           3               4               5       6           7           8              9       10
-
-# suite = parent_suite
-# file_name = parent_suite + suite + .py
-# topo_marker = ?
-# func_name = file_name + :: + name
-# status
