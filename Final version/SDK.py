@@ -24,6 +24,20 @@ def read_csv(file_name):
         sys.exit()
 
 
+def get_case_num():
+    csv_path = "retry-trend.json"
+    try:
+        with open(csv_path) as input_file:
+            data = json.load(input_file)
+            print(type(data))
+            print(data[0]["buildOrder"])
+            # return the case number
+            return data[0]["buildOrder"]
+    except Exception:
+        print("Failed to open!")
+        sys.exit()
+
+
 def sort_func_list(func_list):
     """
     First sort all functions by name, then by suite, and finally by file name.
@@ -55,7 +69,7 @@ for row in suite_csv:
     }
     result.append(func_dict)
 result = sort_func_list(result)
-file_path = "test.csv"
+file_path = "sdk_tests #{}.csv".format(get_case_num())
 with open(file_path, "w", newline="") as out:
     row = list(result[0].keys())
     # del row[-1]
