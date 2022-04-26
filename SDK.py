@@ -2,6 +2,7 @@
 import csv
 import json
 import sys
+import shutil
 from pathlib import Path
 
 
@@ -114,6 +115,7 @@ def main():
     suite_csv.pop(0)
     result = sort_func_list(create_func_list(suite_csv))
     write_csv("sdk_tests #{}.csv".format(get_case_num()), result)
+    shutil.rmtree("allure-report")
 
 
 if __name__ == "__main__":
